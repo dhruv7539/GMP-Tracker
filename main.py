@@ -161,3 +161,6 @@ def home():
     </html>
     """
     return render_template_string(html_template, table=ipo_html_table)
+
+if __name__ == "__main__":
+    app.run(debug=True)
