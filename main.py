@@ -64,6 +64,10 @@ def scrape_gmp_data():
 
 @app.get("/", response_class=HTMLResponse)
 def home():
+    return "<h1>Test Page - It works!</h1>"
+
+
+# def home():
     ipo_df = scrape_gmp_data()
     ipo_html_table = ipo_df.to_html(classes='table table-hover table-custom w-100', index=False, escape=False)
 
