@@ -3,6 +3,26 @@ from bs4 import BeautifulSoup
 import pandas as pd
 from flask import Flask, render_template_string
 import re
+# main.py
+
+from fastapi import FastAPI
+
+app = FastAPI()
+
+# Define your basic route
+@app.get("/")
+def read_root():
+    return {"message": "Hello, World!"}
+
+# Another example route
+@app.get("/items/{item_id}")
+def read_item(item_id: int):
+    return {"item_id": item_id}
+
+# Uvicorn is used to run the FastAPI app
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 app = Flask(__name__)
 
