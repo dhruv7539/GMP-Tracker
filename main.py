@@ -1,43 +1,44 @@
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-from jinja2 import Template
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+from flask import Flask, render_template_string
 import re
 
-app = FastAPI()
+app = Flask(__name__)
 
-# Scrape GMP data
 def scrape_gmp_data():
     url = "https://www.investorgain.com/report/live-ipo-gmp/331/"
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
+    # Extracting the IPO data table from the webpage
     table = soup.find("table")
     if not table:
         return pd.DataFrame(columns=["IPO", "Est Listing (%)", "IPO Size", "Open", "Close", "BoA Dt", "Listing", "GMP Updated"])
 
     rows = table.find_all("tr")
+
+    # Parsing the rows and cells
     data = []
     headers = [header.text.strip() for header in rows[0].find_all("th")]
-    
     for row in rows[1:]:
         cells = row.find_all("td")
         row_data = []
         for cell in cells:
             if cell.get("data-label") == "IPO":
-                ipo_name = cell.find("a").contents[0].strip()
+                ipo_name = cell.find("a").contents[0].strip()  # Extract only the IPO name without any badges or additional text
                 row_data.append(ipo_name)
             else:
                 row_data.append(cell.text.strip())
         data.append(row_data)
 
+    # Creating a DataFrame and modifying columns
     df = pd.DataFrame(data, columns=headers)
     df = df.drop(columns=["GMP(â¹)", "Lot", "Price", "Fire Rating"], errors='ignore')
     df["Est Listing"] = df["Est Listing"].str.extract(r'\((.*?)\)')
     df = df.rename(columns={"Est Listing": "Est Listing (%)"})
 
+    # Convert date format from different types like '25-Oct', '4-Oct', etc. to '25/10'
     def convert_date_format(date_str):
         match = re.match(r'([0-9]{1,2})-([A-Za-z]{3})', date_str)
         if match:
@@ -51,6 +52,7 @@ def scrape_gmp_data():
         df[col] = df[col].apply(convert_date_format)
     df["GMP Updated"] = df["GMP Updated"].str.replace(r'([0-9]{1,2})-([A-Za-z]{3})\s[0-9]{2}:[0-9]{2}', lambda m: convert_date_format(m.group(0).split()[0]), regex=True)
 
+    # Format 'Est Listing (%)' column to include a colored bar representation
     def format_est_listing(val):
         try:
             percentage = float(val.replace('%', ''))
@@ -62,15 +64,13 @@ def scrape_gmp_data():
 
     return df
 
-@app.get("/", response_class=HTMLResponse)
+@app.route('/')
 def home():
-    return "<h1>Test Page - It works!</h1>"
-
-
-# def home():
     ipo_df = scrape_gmp_data()
+    if "GMP(â¹)" in ipo_df.columns:
+        ipo_df = ipo_df.drop(columns=["GMP(â¹)"])
     ipo_html_table = ipo_df.to_html(classes='table table-hover table-custom w-100', index=False, escape=False)
-
+    
     html_template = """
     <!DOCTYPE html>
     <html lang="en">
@@ -160,10 +160,4 @@ def home():
     </body>
     </html>
     """
-
-    # Using Jinja2 templating with FastAPI
-    template = Template(html_template)
-    rendered_html = template.render(table=ipo_html_table)
-    
-    return HTMLResponse(content=rendered_html)
-
+    return render_template_string(html_template, table=ipo_html_table)
