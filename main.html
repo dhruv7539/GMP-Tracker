@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPO GMP Tracker</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .upcoming {
+            color: white;
+            background-color: #f0ad4e;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Current IPO GMP</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>IPO</th>
+                <th>Price</th>
+                <th>GMP (₹)</th>
+                <th>Est Listing</th>
+                <th>Fire Rating</th>
+                <th>IPO Size</th>
+                <th>Open</th>
+                <th>Close</th>
+                <th>BoA Dt</th>
+                <th>Listing</th>
+                <th>GMP Updated</th>
+            </tr>
+        </thead>
+        <tbody id="ipoTableBody">
+            <!-- Data will be dynamically inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        fetch('ipo_data.json')
+            .then(response => response.json())
+            .then(data => {
+                let tableBody = document.getElementById('ipoTableBody');
+                data.forEach(ipo => {
+                    let row = `
+                        <tr>
+                            <td>${ipo.name} <span class="upcoming">Upcoming</span></td>
+                            <td>${ipo.price}</td>
+                            <td>${ipo.gmp_value}</td>
+                            <td>${ipo.est_listing}</td>
+                            <td>🔥🔥🔥🔥</td>
+                            <td>${ipo.ipo_size}</td>
+                            <td>${ipo.open}</td>
+                            <td>${ipo.close}</td>
+                            <td>${ipo.boa_dt}</td>
+                            <td>${ipo.listing}</td>
+                            <td>${ipo.gmp_updated}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            });
+    </script>
+</body>
+</html>
+
